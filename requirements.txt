@@ -3,3 +3,4 @@ streamlit
 datetime
 matplotlib.pyplot
 matplotlib.dates
+matplotlib
