@@ -29,22 +29,24 @@ def process_dataframe(filepath, names, skiprows, sep, formats):
     df.set_index('time', inplace=True)
     return df
 
-
-tuotettuCSV = st.file_uploader("Valitse tuotettu energia (joko 1 tai 5 minuutin välein) .csv tiedostona (muodossa AIKALEIMA;W)", type=['csv'])
-# tuotettuCSV = './data/tuotettu.csv'
-with st.expander("Missä muodossa tiedoston täytyy olla?"):
-    st.write("1. Avaa tiedosto Excelissä.")
-    st.write("2. Poista kaikki sarakkeet aika ja watti -kenttien välistä")
-    st.write("3. Tallenna tiedosto CSV (MS-DOS) (*.csv) muotoon")
-    st.image("./format.png")
-    st.write("Tiedoston pitäisi näyttää Notepadissä avattuna tältä:")
-    st.image("./talta.png")
-    st.write("Jos saat virheilmoituksen enkoodaamisesta, varmista, että tiedostosi on UTF-8 enkoodattu")
-    st.image("./encode.png")
-porssiCSV = st.file_uploader("Valitse pörssisähkön hinnan .csv tiedosto (muodossa AIKALEIMA;hinta (c/kWh))", type=['csv'])
-# porssiCSV = './data/porssi.csv'
-myytyCSV = st.file_uploader("Valitse myydyn sähkön .csv tiedosto (muodossa AIKALEIMA;kWh)", type=['csv'])
-# myytyCSV = './data/myyty.csv'
+try:
+    tuotettuCSV = st.file_uploader("Valitse tuotettu energia (joko 1 tai 5 minuutin välein) .csv tiedostona (muodossa AIKALEIMA;W)", type=['csv'])
+    # tuotettuCSV = './data/tuotettu.csv'
+    with st.expander("Missä muodossa tiedoston täytyy olla?"):
+        st.write("1. Avaa tiedosto Excelissä.")
+        st.write("2. Poista kaikki sarakkeet aika ja watti -kenttien välistä")
+        st.write("3. Tallenna tiedosto CSV (MS-DOS) (*.csv) muotoon")
+        st.image("./format.png")
+        st.write("Tiedoston pitäisi näyttää Notepadissä avattuna tältä:")
+        st.image("./talta.png")
+        st.write("Jos saat virheilmoituksen enkoodaamisesta, varmista, että tiedostosi on UTF-8 enkoodattu")
+        st.image("./encode.png")
+    porssiCSV = st.file_uploader("Valitse pörssisähkön hinnan .csv tiedosto (muodossa AIKALEIMA;hinta (c/kWh))", type=['csv'])
+    # porssiCSV = './data/porssi.csv'
+    myytyCSV = st.file_uploader("Valitse myydyn sähkön .csv tiedosto (muodossa AIKALEIMA;kWh)", type=['csv'])
+    # myytyCSV = './data/myyty.csv'
+except UnicodeDecodeError:
+    st.markdown("<span style='color: red; font-weight: bold;'>Tiedoston luku epäonnistui. Varmistathan, että tiedostosi ovat UTF-8 enkoodattuja</span>", unsafe_allow_html=True)
 if st.button("Laske"):
     if tuotettuCSV is not None and porssiCSV is not None and myytyCSV is not None:
         date_formats = ["%d/%m/%Y %H.%M", "%d/%m/%Y %H:%M", '%d.%m.%Y %H:%M', '%d.%m.%Y %H.%M', '%Y/%m/%d %H:%M', '%Y.%m.%d %H:%M', '%Y-%m-%d %H:%M', "%d/%m/%Y %H:%M:%S", "%d.%m.%Y %H:%M:%S", '%Y-%m-%d %H:%M:%S', "%d/%m/%Y %I:%M %p", "%d.%m.%Y %I:%M %p", '%d %m %Y %H:%M']
