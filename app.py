@@ -2,70 +2,108 @@ import pandas as pd
 import streamlit as st
 import datetime
 import matplotlib.pyplot as plt
+import matplotlib.dates as mdates
 
 st.title("Lasketaan aurinkopaneelien tuottama säästö")
 
 
 
-def process_dataframe(filepath, names, skiprows, sep, original_format):
+def process_dataframe(filepath, names, skiprows, sep, formats):
     df = pd.read_csv(filepath, names=names, sep=sep, skiprows=skiprows, skip_blank_lines=True)
     df[names[1]] = df[names[1]].astype(str).str.replace(',', '.')
 
     df[names[1]] = pd.to_numeric(df[names[1]], errors='coerce')
-    df['time'] = pd.to_datetime(df[names[0]], format=original_format, dayfirst=True)
+    temp_date_columns = []
+    for fmt in formats:
+        temp_time = pd.to_datetime(df[names[0]], format=fmt, dayfirst=True, errors='coerce')
+        temp_date_columns.append(temp_time)
+
+    # Combine the results to find at least one valid parse per row
+    combined_time = pd.concat(temp_date_columns, axis=1).bfill(axis=1).iloc[:, 0]
+
+    if combined_time.isna().all():
+        raise ValueError("None of the date formats matched the 'time' column data")
+
+    df['time'] = combined_time
+    
     df.set_index('time', inplace=True)
     return df
 
 
-# tuotettuCSV = st.file_uploader("Valitse tuotettu energia minuutin välein .csv tiedostona (muodossa AIKALEIMA;W)", type=['csv'])
-tuotettuCSV = './data/tuotettu.csv'
-# porssiCSV = st.file_uploader("Valitse pörssisähkön hinnan .csv tiedosto (muodossa AIKALEIMA;hinta (c/kWh))", type=['csv'])
-porssiCSV = './data/porssi.csv'
-# myytyCSV = st.file_uploader("Valitse myydyn sähkön .csv tiedosto (muodossa AIKALEIMA;kWh)", type=['csv'])
-myytyCSV = './data/myyty.csv'
-if tuotettuCSV is not None and porssiCSV is not None and myytyCSV is not None:
-    df_produced = process_dataframe(tuotettuCSV, ['time', 'wats'], 3, ';', "%d/%m/%Y %H.%M")
+tuotettuCSV = st.file_uploader("Valitse tuotettu energia (joko 1 tai 5 minuutin välein) .csv tiedostona (muodossa AIKALEIMA;W)", type=['csv'])
+# tuotettuCSV = './data/tuotettu.csv'
+porssiCSV = st.file_uploader("Valitse pörssisähkön hinnan .csv tiedosto (muodossa AIKALEIMA;hinta (c/kWh))", type=['csv'])
+# porssiCSV = './data/porssi.csv'
+myytyCSV = st.file_uploader("Valitse myydyn sähkön .csv tiedosto (muodossa AIKALEIMA;kWh)", type=['csv'])
+# myytyCSV = './data/myyty.csv'
+if st.button("Laske"):
+    if tuotettuCSV is not None and porssiCSV is not None and myytyCSV is not None:
+        date_formats = ["%d/%m/%Y %H.%M", "%d/%m/%Y %H:%M", '%d.%m.%Y %H:%M', '%d.%m.%Y %H.%M', '%Y/%m/%d %H:%M', '%Y.%m.%d %H:%M', '%Y-%m-%d %H:%M', "%d/%m/%Y %H:%M:%S", "%d.%m.%Y %H:%M:%S", '%Y-%m-%d %H:%M:%S', "%d/%m/%Y %I:%M %p", "%d.%m.%Y %I:%M %p", '%d %m %Y %H:%M']
 
-    hourly_energy_watts = df_produced['wats'].resample('h').sum()
-    hourly_totals_kwh = hourly_energy_watts / 60000
-
-    df_market = process_dataframe(porssiCSV, ['time', 'c/kWh'], 1, ';', '%d.%m.%Y %H:%M')
-    df_sold = process_dataframe(myytyCSV, ['time', 'kWh'], 1, ';', '%d.%m.%Y %H.%M')
-
-    combined = pd.DataFrame()
-
-    combined.index = df_sold.index
-    combined['produced'] = (hourly_totals_kwh).round(3)
-    # combined['bought'] = (df_bought['kWh']).round(2)
-    combined['market'] = (df_market['c/kWh']).round(3)
-    combined['sold'] = (df_sold['kWh']).round(3)
-    combined.fillna(0, inplace=True)
-
-    final = pd.DataFrame(index=combined.index)
-    final['produced_kWh'] = combined['produced'].round(3)
-    final['self_used_kWh'] = combined['produced'] - combined['sold']
-
-    final['self_used_worth'] = final['self_used_kWh'] * combined['market'] + (5 * final['self_used_kWh']) + (0.6 * final['self_used_kWh'])
-    final['self_used_worth_EUR'] = (final['self_used_worth'] / 100).round(3)
-    final['sold_kWh'] = combined['sold'].round(3)
-
-    final['revenue_from_energy_sold'] = (combined['sold'] * combined['market'] - (0.36 * combined['sold'])).round(3)
-    final['revenue_from_energy_sold_EUR'] = (final['revenue_from_energy_sold'] / 100.0).round(3)
+        df_produced = process_dataframe(tuotettuCSV, ['time', 'wats'], 3, ';', date_formats)
 
 
-    # final['bought'] = combined['bought'].round(2)
-    # final['market'] = combined['market'].round(3)
-    final['total_savings_EUR'] = final['self_used_worth_EUR'] + final['revenue_from_energy_sold_EUR']
+        hourly_energy_watts = df_produced['wats'].resample('h').sum()
 
-    total_day_savings = final['total_savings_EUR'].loc['2025-04-01'].sum().round(3)
-    # st.write(final.loc['2025-04-01'])
-    # print(f'Total savings 1.4.2025: {total_day_savings} eur')
-    # print(f'Total produced 1.4.2025: {final['produced_kWh'].loc['2025-04-01'].sum().round(3)} kWh')
+        time_diff = df_produced.index.to_series().diff().dt.total_seconds().mode()[0]
+
+        if time_diff == 60:
+            hourly_totals_kwh = hourly_energy_watts / 60000
+        elif time_diff == 300:
+            hourly_totals_kwh = hourly_energy_watts / 12000
+
+        df_market = process_dataframe(porssiCSV, ['time', 'c/kWh'], 1, ';', date_formats)
+        df_sold = process_dataframe(myytyCSV, ['time', 'kWh'], 1, ';', date_formats)
+
+        combined = pd.DataFrame()
+
+        combined.index = df_sold.index
+        combined['produced'] = (hourly_totals_kwh).round(3)
+        # combined['bought'] = (df_bought['kWh']).round(2)
+        combined['market'] = (df_market['c/kWh']).round(3)
+        combined['sold'] = (df_sold['kWh']).round(3)
+        combined.fillna(0, inplace=True)
+
+        final = pd.DataFrame(index=combined.index)
+        final['Tuotettu kWh'] = combined['produced'].round(3)
+        final['Itse käytetty kWh'] = combined['produced'] - combined['sold']
+
+        final['Itse käytetyn arvo snt'] = final['Itse käytetty kWh'] * combined['market'] + (5 * final['Itse käytetty kWh']) + (0.6 * final['Itse käytetty kWh'])
+        final['Itse käytetyn sähkön arvo EUR'] = (final['Itse käytetyn arvo snt'] / 100).round(3)
+        final['Myyty kWh'] = combined['sold'].round(3)
+
+        final['Tuotto myydystä sähköstä snt'] = (combined['sold'] * combined['market'] - (0.36 * combined['sold'])).round(3)
+        final['Tuotto myydystä sähköstä EUR'] = (final['Tuotto myydystä sähköstä snt'] / 100.0).round(3)
 
 
-    # st.write(f'Total savings 1.4.2025: {total_day_savings} eur')
-    # st.write(f'Total produced 1.4.2025: {final['produced_kWh'].loc['2025-04-01'].sum().round(3)} kWh')
+        final['Säästö yhteensä EUR'] = final['Itse käytetyn sähkön arvo EUR'] + final['Tuotto myydystä sähköstä EUR']
 
-    daily = final.resample('d').sum()
-    st.write(daily)
-    st.write(f'Säästö yhteensä kyseiseltä ajalta: {daily['total_savings_EUR'].sum().round(3)}')
+
+        daily = final.resample('d').sum()
+        daily = daily[daily['Tuotettu kWh'] > 0]
+        st.write("Päiväkohtaiset tilastot:")
+
+        columns_to_display = ['Tuotettu kWh', 'Itse käytetty kWh', 'Myyty kWh', 'Itse käytetyn sähkön arvo EUR', 'Tuotto myydystä sähköstä EUR', 'Säästö yhteensä EUR']
+        selected_columns = daily[columns_to_display]
+        st.write(selected_columns)
+
+        st.write(f'Säästö yhteensä kyseiseltä ajalta: {daily['Säästö yhteensä EUR'].sum().round(3)} EUR')
+
+        fig, ax = plt.subplots()
+
+        ax.plot(daily['Säästö yhteensä EUR'], color="green")
+        ax.set_title('Daily Total Savings in EUR', fontsize=15, color='gray')
+        ax.set_xlabel('Day', fontsize=12, color='gray')
+        ax.set_ylabel('Savings (EUR)', fontsize=12, color='gray')
+        ax.tick_params(axis='x', colors='gray')
+        ax.tick_params(axis='y', colors='gray') 
+        fig.patch.set_facecolor('black')
+        ax.set_facecolor('black')
+        ax.grid(True, which='both', color='gray', linestyle='-', linewidth=0.5)
+        plt.xticks(rotation=45)
+        ax.xaxis.set_major_locator(mdates.DayLocator())  # Ensure a tick for each day
+        ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
+
+        st.pyplot(fig)
+    else:
+        st.write("Syötä ensin tarvittavat tiedot!")
