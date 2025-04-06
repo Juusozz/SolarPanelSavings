@@ -32,7 +32,7 @@ def process_dataframe(filepath, names, skiprows, sep, formats):
 
 tuotettuCSV = st.file_uploader("Valitse tuotettu energia (joko 1 tai 5 minuutin välein) .csv tiedostona (muodossa AIKALEIMA;W)", type=['csv'])
 # tuotettuCSV = './data/tuotettu.csv'
-with st.expander("Tarkemmin kerrottu, missä muodossa tiedosto täytyy olla"):
+with st.expander("Missä muodossa tiedosto täytyy olla?"):
     st.write("1. Avaa tiedosto Excelissä.")
     st.write("2. Poista kaikki sarakkeet aika ja watti -kenttien välistä")
     st.write("3. Tallenna tiedosto CSV (MS-DOS) (*.csv) muotoon")
