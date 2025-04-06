@@ -1,6 +1,6 @@
 pandas
 streamlit
 datetime
+matplotlib
 matplotlib.pyplot
 matplotlib.dates
-matplotlib
