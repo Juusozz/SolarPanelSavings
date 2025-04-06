@@ -1,0 +1,6 @@
+*.csv
+/myenv
+/data
+data/
+myenv/
+./data
