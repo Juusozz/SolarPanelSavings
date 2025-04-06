@@ -32,6 +32,15 @@ def process_dataframe(filepath, names, skiprows, sep, formats):
 
 tuotettuCSV = st.file_uploader("Valitse tuotettu energia (joko 1 tai 5 minuutin välein) .csv tiedostona (muodossa AIKALEIMA;W)", type=['csv'])
 # tuotettuCSV = './data/tuotettu.csv'
+with st.expander("Tarkemmin kerrottu, missä muodossa tiedosto täytyy olla"):
+    st.write("1. Avaa tiedosto Excelissä.")
+    st.write("2. Poista kaikki sarakkeet aika ja watti -kenttien välistä")
+    st.write("3. Tallenna tiedosto CSV (MS-DOS) (*.csv) muotoon")
+    st.image("./format.png")
+    st.write("Tiedoston pitäisi näyttää Notepadissä avattuna tältä:")
+    st.image("./talta.png")
+    st.write("Jos saat virheilmoituksen enkoodaamisesta, varmista, että tiedostosi on UTF-8 enkoodattu")
+    st.image("./encode.png")
 porssiCSV = st.file_uploader("Valitse pörssisähkön hinnan .csv tiedosto (muodossa AIKALEIMA;hinta (c/kWh))", type=['csv'])
 # porssiCSV = './data/porssi.csv'
 myytyCSV = st.file_uploader("Valitse myydyn sähkön .csv tiedosto (muodossa AIKALEIMA;kWh)", type=['csv'])
