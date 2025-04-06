@@ -104,9 +104,9 @@ if st.button("Laske"):
         fig, ax = plt.subplots()
 
         ax.plot(daily['Säästö yhteensä EUR'], color="green")
-        ax.set_title('Daily Total Savings in EUR', fontsize=15, color='gray')
-        ax.set_xlabel('Day', fontsize=12, color='gray')
-        ax.set_ylabel('Savings (EUR)', fontsize=12, color='gray')
+        ax.set_title('Säästöt yhteensä EUR', fontsize=15, color='gray')
+        ax.set_xlabel('Päivä', fontsize=12, color='gray')
+        ax.set_ylabel('Säästöt (EUR)', fontsize=12, color='gray')
         ax.tick_params(axis='x', colors='gray')
         ax.tick_params(axis='y', colors='gray') 
         fig.patch.set_facecolor('black')
