@@ -47,6 +47,7 @@ try:
     # myytyCSV = './data/myyty.csv'
 except UnicodeDecodeError:
     st.markdown("<span style='color: red; font-weight: bold;'>Tiedoston luku epäonnistui. Varmistathan, että tiedostosi ovat UTF-8 enkoodattuja</span>", unsafe_allow_html=True)
+
 if st.button("Laske"):
     if tuotettuCSV is not None and porssiCSV is not None and myytyCSV is not None:
         date_formats = ["%d/%m/%Y %H.%M", "%d/%m/%Y %H:%M", '%d.%m.%Y %H:%M', '%d.%m.%Y %H.%M', '%Y/%m/%d %H:%M', '%Y.%m.%d %H:%M', '%Y-%m-%d %H:%M', "%d/%m/%Y %H:%M:%S", "%d.%m.%Y %H:%M:%S", '%Y-%m-%d %H:%M:%S', "%d/%m/%Y %I:%M %p", "%d.%m.%Y %I:%M %p", '%d %m %Y %H:%M']
@@ -76,12 +77,12 @@ if st.button("Laske"):
         combined.fillna(0, inplace=True)
 
         final = pd.DataFrame(index=combined.index)
-        final['Tuotettu kWh'] = combined['produced'].round(3)
+        final['Tuotettu kWh'] = combined['produced'].round(2)
         final['Itse käytetty kWh'] = combined['produced'] - combined['sold']
 
         final['Itse käytetyn arvo snt'] = final['Itse käytetty kWh'] * combined['market'] + (5 * final['Itse käytetty kWh']) + (0.6 * final['Itse käytetty kWh'])
         final['Itse käytetyn sähkön arvo EUR'] = (final['Itse käytetyn arvo snt'] / 100).round(3)
-        final['Myyty kWh'] = combined['sold'].round(3)
+        final['Myyty kWh'] = combined['sold'].round(2)
 
         final['Tuotto myydystä sähköstä snt'] = (combined['sold'] * combined['market'] - (0.36 * combined['sold'])).round(3)
         final['Tuotto myydystä sähköstä EUR'] = (final['Tuotto myydystä sähköstä snt'] / 100.0).round(3)
