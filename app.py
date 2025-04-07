@@ -24,7 +24,7 @@ try:
         st.image("./encode.png")
     # porssiCSV = st.file_uploader("Valitse pörssisähkön hinnan .csv tiedosto (muodossa AIKALEIMA;hinta (c/kWh))", type=['csv'])
     # porssiCSV = './data/porssi.csv'
-    myytyCSV = st.file_uploader("Valitse myydyn sähkön .csv tiedosto (muodossa AIKALEIMA;kWh)", type=['csv'])
+    myytyCSV = st.file_uploader("Valitse myyty sähkö tunnin välein .csv tiedosto (muodossa AIKALEIMA;kWh)", type=['csv'])
     # myytyCSV = './data/myyty.csv'
     siirto = st.number_input("Sähkön siirto (c/kWh): ", min_value=0.0, max_value=None, step=0.01, value=5.16)
     osto_marg = st.number_input("Sähkön oston marginaali (c/kWh): ", min_value=0.0, max_value=None, step=0.01, value=0.60)
