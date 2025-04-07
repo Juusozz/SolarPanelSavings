@@ -45,6 +45,8 @@ try:
     # porssiCSV = './data/porssi.csv'
     myytyCSV = st.file_uploader("Valitse myydyn sähkön .csv tiedosto (muodossa AIKALEIMA;kWh)", type=['csv'])
     # myytyCSV = './data/myyty.csv'
+    siirto = st.number_input("Sähkön siirto (c/kWh): ", min_value=0.0, max_value=None, step=0.01)
+
 except UnicodeDecodeError:
     st.markdown("<span style='color: red; font-weight: bold;'>Tiedoston luku epäonnistui. Varmistathan, että tiedostosi ovat UTF-8 enkoodattuja</span>", unsafe_allow_html=True)
 
@@ -80,7 +82,7 @@ if st.button("Laske"):
         final['Tuotettu kWh'] = combined['Tuotettu kWh'].round(2)
         final['Itse käytetty kWh'] = combined['Tuotettu kWh'] - combined['Myyty kWh']
 
-        final['Itse käytetyn arvo snt'] = final['Itse käytetty kWh'] * combined['Pörssisähkön hinta'] + (5 * final['Itse käytetty kWh']) + (0.6 * final['Itse käytetty kWh'])
+        final['Itse käytetyn arvo snt'] = final['Itse käytetty kWh'] * combined['Pörssisähkön hinta'] + (siirto * final['Itse käytetty kWh']) + (0.6 * final['Itse käytetty kWh'])
         final['Itse käytetyn sähkön arvo EUR'] = (final['Itse käytetyn arvo snt'] / 100).round(3)
         final['Myyty kWh'] = combined['Myyty kWh'].round(2)
 
@@ -94,7 +96,9 @@ if st.button("Laske"):
             st.write("Tunneittain:")
             st.write(combined)
             st.write("Päivittäin:")
-            st.write(combined.resample('d').sum())
+            paivittain = combined.resample('d').sum()
+            paivittain = paivittain[paivittain['Tuotettu kWh'] > 0]
+            st.write(paivittain[['Tuotettu kWh', 'Myyty kWh']])
 
 
 
