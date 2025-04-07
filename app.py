@@ -27,9 +27,20 @@ st.title("Lasketaan aurinkopaneelien tuottama säästö")
 # except Exception as e:
 #     st.error(e)
 
-
+def detect_separator(file, sample_size=1024):
+    # Read a small part of the file to guess the separator
+    content = file.read(sample_size)
+    # Reset file read cursor to the start for later reading
+    file.seek(0)
+    # Count which delimiter is more prevalent
+    semicolon_count = content.count(b';')
+    comma_count = content.count(b',')
+    # Determine the appropriate separator
+    return ';' if semicolon_count > comma_count else ','
 
 def process_dataframe(filepath, names, skiprows, sep, formats):
+    sep = detect_separator(filepath)
+    
     df = pd.read_csv(filepath, names=names, sep=sep, skiprows=skiprows, skip_blank_lines=True)
     df[names[1]] = df[names[1]].astype(str).str.replace(',', '.')
 
