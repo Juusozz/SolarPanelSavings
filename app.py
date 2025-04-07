@@ -46,12 +46,14 @@ try:
     myytyCSV = st.file_uploader("Valitse myydyn sähkön .csv tiedosto (muodossa AIKALEIMA;kWh)", type=['csv'])
     # myytyCSV = './data/myyty.csv'
     siirto = st.number_input("Sähkön siirto (c/kWh): ", min_value=0.0, max_value=None, step=0.01)
+    osto_marg = st.number_input("Sähkön oston marginaali (c/kWh): ", min_value=0.0, max_value=None, step=0.01)
+    myynti_marg = st.number_input("Sähkön myynti marginaali (c/kWh): ", min_value=0.0, max_value=None, step=0.01)
 
 except UnicodeDecodeError:
     st.markdown("<span style='color: red; font-weight: bold;'>Tiedoston luku epäonnistui. Varmistathan, että tiedostosi ovat UTF-8 enkoodattuja</span>", unsafe_allow_html=True)
 
 if st.button("Laske"):
-    if tuotettuCSV is not None and porssiCSV is not None and myytyCSV is not None and siirto > 0:
+    if tuotettuCSV is not None and porssiCSV is not None and myytyCSV is not None and siirto > 0 and osto_marg > 0 and myynti_marg > 0:
         date_formats = ["%d/%m/%Y %H.%M", "%d/%m/%Y %H:%M", '%d.%m.%Y %H:%M', '%d.%m.%Y %H.%M', '%Y/%m/%d %H:%M', '%Y.%m.%d %H:%M', '%Y-%m-%d %H:%M', "%d/%m/%Y %H:%M:%S", "%d.%m.%Y %H:%M:%S", '%Y-%m-%d %H:%M:%S', "%d/%m/%Y %I:%M %p", "%d.%m.%Y %I:%M %p", '%d %m %Y %H:%M']
 
         df_produced = process_dataframe(tuotettuCSV, ['time', 'wats'], 3, ';', date_formats)
@@ -82,11 +84,11 @@ if st.button("Laske"):
         final['Tuotettu kWh'] = combined['Tuotettu kWh'].round(2)
         final['Itse käytetty kWh'] = combined['Tuotettu kWh'] - combined['Myyty kWh']
 
-        final['Itse käytetyn arvo snt'] = final['Itse käytetty kWh'] * combined['Pörssisähkön hinta'] + (siirto * final['Itse käytetty kWh']) + (0.6 * final['Itse käytetty kWh'])
+        final['Itse käytetyn arvo snt'] = final['Itse käytetty kWh'] * combined['Pörssisähkön hinta'] + (siirto * final['Itse käytetty kWh']) + (osto_marg * final['Itse käytetty kWh'])
         final['Itse käytetyn sähkön arvo EUR'] = (final['Itse käytetyn arvo snt'] / 100).round(3)
         final['Myyty kWh'] = combined['Myyty kWh'].round(2)
 
-        final['Tuotto myydystä sähköstä snt'] = (combined['Myyty kWh'] * combined['Pörssisähkön hinta'] - (0.36 * combined['Myyty kWh'])).round(3)
+        final['Tuotto myydystä sähköstä snt'] = (combined['Myyty kWh'] * combined['Pörssisähkön hinta'] - (myynti_marg * combined['Myyty kWh'])).round(3)
         final['Tuotto myydystä sähköstä EUR'] = (final['Tuotto myydystä sähköstä snt'] / 100.0).round(3)
 
 
@@ -99,7 +101,12 @@ if st.button("Laske"):
             paivittain = combined.resample('d').sum()
             paivittain = paivittain[paivittain['Tuotettu kWh'] > 0]
             st.write(paivittain[['Tuotettu kWh', 'Myyty kWh']])
-
+        
+        with st.expander("Miten tulokset laskettiin?"):
+            st.write("Itse käytetty kWh = Tuotettu kWh - Myyty kWh")
+            st.write("Itse käytetyn sähkön arvo = Itse käytetty kWh x Pörssisähkön hinta + (siirto x Itse käytetty kWh) + Ostomarginaali x Itse käytetty kWh")
+            st.write("Tuotto myydystä sähköstä: Myyty kWh x Pörssisähkön hinta - (Myyntimarginaali x Myyty kWh)")
+            st.write("Säästö yhteensä = Itse käytetyn sähkön arvo + Tuotto myydystä sähköstä")
 
 
         daily = final.resample('d').sum()
