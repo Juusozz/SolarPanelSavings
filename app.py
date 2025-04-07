@@ -3,9 +3,9 @@ import streamlit as st
 import datetime
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
-import streamlit_authenticator as stauth
-import yaml
-from yaml.loader import SafeLoader
+# import streamlit_authenticator as stauth
+# import yaml
+# from yaml.loader import SafeLoader
 
 
 # st.title("Lasketaan aurinkopaneelien tuottama säästö")
