@@ -66,9 +66,9 @@ try:
     # porssiCSV = './data/porssi.csv'
     myytyCSV = st.file_uploader("Valitse myydyn sähkön .csv tiedosto (muodossa AIKALEIMA;kWh)", type=['csv'])
     # myytyCSV = './data/myyty.csv'
-    siirto = st.number_input("Sähkön siirto (c/kWh): ", min_value=0.0, max_value=None, step=0.01)
-    osto_marg = st.number_input("Sähkön oston marginaali (c/kWh): ", min_value=0.0, max_value=None, step=0.01)
-    myynti_marg = st.number_input("Sähkön myynti marginaali (c/kWh): ", min_value=0.0, max_value=None, step=0.01)
+    siirto = st.number_input("Sähkön siirto (c/kWh): ", min_value=0.0, max_value=None, step=0.01, value=5.16)
+    osto_marg = st.number_input("Sähkön oston marginaali (c/kWh): ", min_value=0.0, max_value=None, step=0.01, value=0.60)
+    myynti_marg = st.number_input("Sähkön myynti marginaali (c/kWh): ", min_value=0.0, max_value=None, step=0.01, value=0.36)
 
 except UnicodeDecodeError:
     st.markdown("<span style='color: red; font-weight: bold;'>Tiedoston luku epäonnistui. Varmistathan, että tiedostosi ovat UTF-8 enkoodattuja</span>", unsafe_allow_html=True)
