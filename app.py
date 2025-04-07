@@ -70,25 +70,32 @@ if st.button("Laske"):
         combined = pd.DataFrame()
 
         combined.index = df_sold.index
-        combined['produced'] = (hourly_totals_kwh).round(3)
+        combined['Tuotettu kWh'] = (hourly_totals_kwh).round(3)
         # combined['bought'] = (df_bought['kWh']).round(2)
-        combined['market'] = (df_market['c/kWh']).round(3)
-        combined['sold'] = (df_sold['kWh']).round(3)
+        combined['Pörssisähkön hinta'] = (df_market['c/kWh']).round(3)
+        combined['Myyty kWh'] = (df_sold['kWh']).round(3)
         combined.fillna(0, inplace=True)
 
         final = pd.DataFrame(index=combined.index)
-        final['Tuotettu kWh'] = combined['produced'].round(2)
-        final['Itse käytetty kWh'] = combined['produced'] - combined['sold']
+        final['Tuotettu kWh'] = combined['Tuotettu kWh'].round(2)
+        final['Itse käytetty kWh'] = combined['Tuotettu kWh'] - combined['Myyty kWh']
 
-        final['Itse käytetyn arvo snt'] = final['Itse käytetty kWh'] * combined['market'] + (5 * final['Itse käytetty kWh']) + (0.6 * final['Itse käytetty kWh'])
+        final['Itse käytetyn arvo snt'] = final['Itse käytetty kWh'] * combined['Pörssisähkön hinta'] + (5 * final['Itse käytetty kWh']) + (0.6 * final['Itse käytetty kWh'])
         final['Itse käytetyn sähkön arvo EUR'] = (final['Itse käytetyn arvo snt'] / 100).round(3)
-        final['Myyty kWh'] = combined['sold'].round(2)
+        final['Myyty kWh'] = combined['Myyty kWh'].round(2)
 
-        final['Tuotto myydystä sähköstä snt'] = (combined['sold'] * combined['market'] - (0.36 * combined['sold'])).round(3)
+        final['Tuotto myydystä sähköstä snt'] = (combined['Myyty kWh'] * combined['Pörssisähkön hinta'] - (0.36 * combined['Myyty kWh'])).round(3)
         final['Tuotto myydystä sähköstä EUR'] = (final['Tuotto myydystä sähköstä snt'] / 100.0).round(3)
 
 
         final['Säästö yhteensä EUR'] = final['Itse käytetyn sähkön arvo EUR'] + final['Tuotto myydystä sähköstä EUR']
+
+        with st.expander("Data ennen laskelmia"):
+            st.write("Tunneittain:")
+            st.write(combined)
+            st.write("Päivittäin:")
+            st.write(combined.resample('d').sum())
+
 
 
         daily = final.resample('d').sum()
