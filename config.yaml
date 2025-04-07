@@ -1,0 +1,21 @@
+cookie:
+  expiry_days: 30
+  key: test
+  name: Testi
+credentials:
+  usernames:
+    jsmith:
+      email: jsmith@gmail.com
+      failed_login_attempts: 0 # Will be managed automatically
+      first_name: John
+      last_name: Smith
+      logged_in: False # Will be managed automatically
+      password: abc # Will be hashed automatically
+
+    rbriggs:
+      email: rbriggs@gmail.com
+      failed_login_attempts: 0 # Will be managed automatically
+      first_name: Rebecca
+      last_name: Briggs
+      logged_in: False # Will be managed automatically
+      password: def # Will be hashed automatically

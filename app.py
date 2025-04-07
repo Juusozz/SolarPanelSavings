@@ -3,8 +3,29 @@ import streamlit as st
 import datetime
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
+import streamlit_authenticator as stauth
+import yaml
+from yaml.loader import SafeLoader
 
-st.title("Lasketaan aurinkopaneelien tuottama säästö")
+
+# st.title("Lasketaan aurinkopaneelien tuottama säästö")
+
+
+# with open('./config.yaml') as file:
+#     config = yaml.load(file, Loader=SafeLoader)
+
+
+# authenticator = stauth.Authenticate(
+#     config['credentials'],
+#     config['cookie']['name'],
+#     config['cookie']['key'],
+#     config['cookie']['expiry_days']
+# )
+
+# try:
+#     authenticator.login()
+# except Exception as e:
+#     st.error(e)
 
 
 
