@@ -8,7 +8,7 @@ import matplotlib.dates as mdates
 # from yaml.loader import SafeLoader
 
 
-# st.title("Lasketaan aurinkopaneelien tuottama säästö")
+st.title("Lasketaan aurinkopaneelien tuottama säästö")
 
 
 # with open('./config.yaml') as file:
