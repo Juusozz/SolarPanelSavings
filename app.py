@@ -3,63 +3,12 @@ import streamlit as st
 import datetime
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
-# import streamlit_authenticator as stauth
-# import yaml
-# from yaml.loader import SafeLoader
-
+import requests
+from market_prices import fetch_market_prices
+from process import process_dataframe
 
 st.title("Lasketaan aurinkopaneelien tuottama säästö")
 
-
-# with open('./config.yaml') as file:
-#     config = yaml.load(file, Loader=SafeLoader)
-
-
-# authenticator = stauth.Authenticate(
-#     config['credentials'],
-#     config['cookie']['name'],
-#     config['cookie']['key'],
-#     config['cookie']['expiry_days']
-# )
-
-# try:
-#     authenticator.login()
-# except Exception as e:
-#     st.error(e)
-
-def detect_separator(file, sample_size=1024):
-    # Read a small part of the file to guess the separator
-    content = file.read(sample_size)
-    # Reset file read cursor to the start for later reading
-    file.seek(0)
-    # Count which delimiter is more prevalent
-    semicolon_count = content.count(b';')
-    comma_count = content.count(b',')
-    # Determine the appropriate separator
-    return ';' if semicolon_count > comma_count else ','
-
-def process_dataframe(filepath, names, skiprows, sep, formats):
-    sep = detect_separator(filepath)
-    
-    df = pd.read_csv(filepath, names=names, sep=sep, skiprows=skiprows, skip_blank_lines=True)
-    df[names[1]] = df[names[1]].astype(str).str.replace(',', '.')
-
-    df[names[1]] = pd.to_numeric(df[names[1]], errors='coerce')
-    temp_date_columns = []
-    for fmt in formats:
-        temp_time = pd.to_datetime(df[names[0]], format=fmt, dayfirst=True, errors='coerce')
-        temp_date_columns.append(temp_time)
-
-    # Combine the results to find at least one valid parse per row
-    combined_time = pd.concat(temp_date_columns, axis=1).bfill(axis=1).iloc[:, 0]
-
-    if combined_time.isna().all():
-        raise ValueError("None of the date formats matched the 'time' column data")
-
-    df['time'] = combined_time
-    
-    df.set_index('time', inplace=True)
-    return df
 
 try:
     tuotettuCSV = st.file_uploader("Valitse tuotettu energia (joko 1 tai 5 minuutin välein) .csv tiedostona (muodossa AIKALEIMA;W)", type=['csv'])
@@ -73,7 +22,7 @@ try:
         st.image("./talta.png")
         st.write("Jos saat virheilmoituksen enkoodaamisesta, varmista, että tiedostosi on UTF-8 enkoodattu")
         st.image("./encode.png")
-    porssiCSV = st.file_uploader("Valitse pörssisähkön hinnan .csv tiedosto (muodossa AIKALEIMA;hinta (c/kWh))", type=['csv'])
+    # porssiCSV = st.file_uploader("Valitse pörssisähkön hinnan .csv tiedosto (muodossa AIKALEIMA;hinta (c/kWh))", type=['csv'])
     # porssiCSV = './data/porssi.csv'
     myytyCSV = st.file_uploader("Valitse myydyn sähkön .csv tiedosto (muodossa AIKALEIMA;kWh)", type=['csv'])
     # myytyCSV = './data/myyty.csv'
@@ -85,7 +34,7 @@ except UnicodeDecodeError:
     st.markdown("<span style='color: red; font-weight: bold;'>Tiedoston luku epäonnistui. Varmistathan, että tiedostosi ovat UTF-8 enkoodattuja</span>", unsafe_allow_html=True)
 
 if st.button("Laske"):
-    if tuotettuCSV is not None and porssiCSV is not None and myytyCSV is not None and siirto > 0 and osto_marg > 0 and myynti_marg > 0:
+    if tuotettuCSV is not None and myytyCSV is not None and siirto > 0 and osto_marg > 0 and myynti_marg > 0:
         date_formats = ["%d/%m/%Y %H.%M", "%d/%m/%Y %H:%M", '%d.%m.%Y %H:%M', '%d.%m.%Y %H.%M', '%Y/%m/%d %H:%M', '%Y.%m.%d %H:%M', '%Y-%m-%d %H:%M', "%d/%m/%Y %H:%M:%S", "%d.%m.%Y %H:%M:%S", '%Y-%m-%d %H:%M:%S', "%d/%m/%Y %I:%M %p", "%d.%m.%Y %I:%M %p", '%d %m %Y %H:%M']
 
         df_produced = process_dataframe(tuotettuCSV, ['time', 'wats'], 3, ';', date_formats)
@@ -95,12 +44,18 @@ if st.button("Laske"):
 
         time_diff = df_produced.index.to_series().diff().dt.total_seconds().mode()[0]
 
+        start_time = hourly_energy_watts.index.min()
+        end_time = hourly_energy_watts.index.max()
+
         if time_diff == 60:
             hourly_totals_kwh = hourly_energy_watts / 60000
         elif time_diff == 300:
             hourly_totals_kwh = hourly_energy_watts / 12000
 
-        df_market = process_dataframe(porssiCSV, ['time', 'c/kWh'], 1, ';', date_formats)
+        df_market = fetch_market_prices(start_time, end_time)
+        print(df_market)
+
+        # df_market = process_dataframe(porssiCSV, ['time', 'c/kWh'], 1, ';', date_formats)
         df_sold = process_dataframe(myytyCSV, ['time', 'kWh'], 1, ';', date_formats)
 
         combined = pd.DataFrame()
