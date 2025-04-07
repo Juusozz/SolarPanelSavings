@@ -51,7 +51,7 @@ except UnicodeDecodeError:
     st.markdown("<span style='color: red; font-weight: bold;'>Tiedoston luku epäonnistui. Varmistathan, että tiedostosi ovat UTF-8 enkoodattuja</span>", unsafe_allow_html=True)
 
 if st.button("Laske"):
-    if tuotettuCSV is not None and porssiCSV is not None and myytyCSV is not None:
+    if tuotettuCSV is not None and porssiCSV is not None and myytyCSV is not None and siirto > 0:
         date_formats = ["%d/%m/%Y %H.%M", "%d/%m/%Y %H:%M", '%d.%m.%Y %H:%M', '%d.%m.%Y %H.%M', '%Y/%m/%d %H:%M', '%Y.%m.%d %H:%M', '%Y-%m-%d %H:%M', "%d/%m/%Y %H:%M:%S", "%d.%m.%Y %H:%M:%S", '%Y-%m-%d %H:%M:%S', "%d/%m/%Y %I:%M %p", "%d.%m.%Y %I:%M %p", '%d %m %Y %H:%M']
 
         df_produced = process_dataframe(tuotettuCSV, ['time', 'wats'], 3, ';', date_formats)
